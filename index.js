@@ -11,25 +11,37 @@ let allMovies = [];
 const PLACEHOLDER_POSTER = './assets/movie-placeholder.png';
 
 
-async function loadMovies() {
+
+async function loadMovies(searchTerm = 'marvel') {
 
   try {
 
     const response = await fetch(
-      'https://www.omdbapi.com/?apikey=1532d22e&s=marvel'
+      `https://www.omdbapi.com/?apikey=1532d22e&s=${encodeURIComponent(searchTerm)}`
     );
 
     const data = await response.json();
 
     if (data.Response === 'False') {
+
       allMovies = [];
       displayMovies([]);
+
+      resultsInfo.innerHTML = '<span>Showing: </span>No movies available';
+
       return;
     }
 
     allMovies = data.Search || [];
 
-    displayMovies(allMovies);
+    const sortedMovies = sortMovies(
+      allMovies,
+      sortSelect.value
+    );
+
+    displayMovies(sortedMovies);
+
+    resultsInfo.innerHTML = `<span>Showing: </span>${searchTerm}`;
 
   } catch (error) {
 
@@ -38,6 +50,7 @@ async function loadMovies() {
     resultsList.innerHTML = '<p>Unable to load movies. Please try again.</p>';
 
   }
+
 }
 
 
@@ -47,8 +60,7 @@ function displayMovies(movies) {
 
     resultsList.innerHTML = `
       <div class="no-results">
-        <h2>No movies found</h2>
-        <p>Try searching for another movie.</p>
+        <h2>No movies available</h2>
       </div>
     `;
 
@@ -90,7 +102,9 @@ function sortMovies(movies, sortValue) {
       return sortedMovies;
 
   }
+
 }
+
 
 
 function movieHTML(movie) {
@@ -119,41 +133,19 @@ searchForm.addEventListener('submit', (event) => {
 
   event.preventDefault();
 
-});
+  const searchTerm = searchBar.value.trim();
 
-
-searchBar.addEventListener('input', (event) => {
-
-  const searchTerm = event.target.value.toLowerCase();
-
-  const filteredMovies = allMovies.filter(movie =>
-    movie.Title.toLowerCase().includes(searchTerm)
-  );
-
-  const sortedMovies = sortMovies(
-    filteredMovies,
-    sortSelect.value
-  );
-
-  displayMovies(sortedMovies);
-
-  resultsInfo.innerHTML = `
-    <span>Showing: </span>${searchTerm || 'Marvel'}
-  `;
+  if (searchTerm) {
+    loadMovies(searchTerm);
+  }
 
 });
 
 
 sortSelect.addEventListener('change', () => {
 
-  const searchTerm = searchBar.value.toLowerCase();
-
-  const filteredMovies = allMovies.filter(movie =>
-    movie.Title.toLowerCase().includes(searchTerm)
-  );
-
   const sortedMovies = sortMovies(
-    filteredMovies,
+    allMovies,
     sortSelect.value
   );
 
@@ -163,4 +155,5 @@ sortSelect.addEventListener('change', () => {
 
 
 loadMovies();
+
 
